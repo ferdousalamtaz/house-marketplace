@@ -11,7 +11,7 @@ import { db } from '../firebase.config'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { v4 as uuidv4 } from 'uuid'
-import Spinner from '../Components/Spinner'
+import Spinner from '../components/Spinner'
 
 function EditListing() {
   // eslint-disable-next-line
@@ -52,39 +52,37 @@ function EditListing() {
 
   const auth = getAuth()
   const navigate = useNavigate()
-  const isMounted = useRef(true)
   const params = useParams()
+  const isMounted = useRef(true)
 
-  // Redirect if listings is not users
-
+  // Redirect if listing is not user's
   useEffect(() => {
-    if (listing && listing.uid !== auth.currentUser.uid) {
-      toast.error('You cannot edit this listing')
+    if (listing && listing.userRef !== auth.currentUser.uid) {
+      toast.error('You can not edit that listing')
       navigate('/')
     }
-  }, [])
+  })
 
-  //fet listing to edit
+  // Fetch listing to edit
   useEffect(() => {
     setLoading(true)
     const fetchListing = async () => {
       const docRef = doc(db, 'listings', params.listingId)
       const docSnap = await getDoc(docRef)
-
       if (docSnap.exists()) {
         setListing(docSnap.data())
         setFormData({ ...docSnap.data(), address: docSnap.data().location })
         setLoading(false)
       } else {
         navigate('/')
-        toast.error("Listing doens't exists")
+        toast.error('Listing does not exist')
       }
     }
 
     fetchListing()
-  }, [navigate, params.listingId])
+  }, [params.listingId, navigate])
 
-  //Sets userRef to login user
+  // Sets userRef to logged in user
   useEffect(() => {
     if (isMounted) {
       onAuthStateChanged(auth, (user) => {
@@ -103,7 +101,6 @@ function EditListing() {
   }, [isMounted])
 
   const onSubmit = async (e) => {
-    console.log(formData)
     e.preventDefault()
 
     setLoading(true)
@@ -124,14 +121,12 @@ function EditListing() {
     let location
 
     if (geolocationEnabled) {
-      const request = `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${process.env.REACT_APP_GEOCODE_API_KEY}`
-
-      console.log(process.env.REACT_APP_GEOCODE_API_KEY)
-
-      const response = await fetch(request)
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${process.env.REACT_APP_GEOCODE_API_KEY}`
+      )
 
       const data = await response.json()
-      console.log(data)
+
       geolocation.lat = data.results[0]?.geometry.location.lat ?? 0
       geolocation.lng = data.results[0]?.geometry.location.lng ?? 0
 
@@ -211,10 +206,9 @@ function EditListing() {
     delete formDataCopy.address
     !formDataCopy.offer && delete formDataCopy.discountedPrice
 
-    //update listing
-    const docRef = await doc(db, 'listings', params.listingId)
+    // Update listing
+    const docRef = doc(db, 'listings', params.listingId)
     await updateDoc(docRef, formDataCopy)
-
     setLoading(false)
     toast.success('Listing saved')
     navigate(`/category/${formDataCopy.type}/${docRef.id}`)
@@ -254,7 +248,7 @@ function EditListing() {
   return (
     <div className='profile'>
       <header>
-        <p className='pageHeader'>Edit a Listing</p>
+        <p className='pageHeader'>Edit Listing</p>
       </header>
 
       <main>
